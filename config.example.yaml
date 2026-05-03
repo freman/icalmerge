@@ -1,0 +1,51 @@
+server:
+  port: 8080
+  # Generate with: echo "yourpassword" | icalmerge password
+  # Omit or leave empty to serve without authentication.
+  secret: "$2a$12$examplehashedvaluegoeshere"
+
+  # Header used for auth. Default "Authorization" requires "Bearer <secret>" value.
+  # For clients that send a raw token (e.g. TRMNL custom header), use a custom name:
+  # auth_header: X-API-Key
+  auth_header: Authorization
+
+  # On-demand mode (default): fetch sources on first request after cache expires.
+  cache_ttl: 15m
+
+  # Background polling mode: uncomment poll_interval to enable.
+  # Sources are fetched on this interval regardless of incoming requests.
+  # Requests are served instantly from the last good buffer.
+  # poll_interval: 10m
+
+  fetch_timeout: 30s      # per-refresh timeout (applies to both modes)
+  days_ahead: 60
+  parallelism: 0          # max concurrent source fetches per refresh (0 = unlimited)
+  # mark_conflicts: false  # prefix overlapping event titles with "CONFLICT: "
+
+google:
+  # Set via env vars GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET instead of here
+  client_id: ""
+  client_secret: ""
+
+# data_dir is where Google OAuth tokens are stored.
+# Defaults to ~/.config/icalmerge
+# Override with ICALMERGE_DATA_DIR env var.
+# In Docker/Kubernetes, set this to a mounted volume path.
+data_dir: /data
+
+calendars:
+  - name: Work
+    type: ical
+    url: "https://calendar.example.com/ical/feed.ics"
+    # headers:                          # optional: sent with every fetch of this URL
+    #   Authorization: "Bearer mytoken"
+
+  - name: Shannon
+    type: google
+    account: shannon      # matches token file: <data_dir>/tokens/shannon.json
+    calendar_id: primary
+
+  - name: Wife
+    type: google
+    account: wife         # matches token file: <data_dir>/tokens/wife.json
+    calendar_id: primary
