@@ -9,4 +9,5 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -o ic
 
 FROM gcr.io/distroless/static-debian12
 COPY --from=builder /build/icalmerge /icalmerge
-ENTRYPOINT ["/icalmerge", "serve"]
+ENTRYPOINT ["/icalmerge"]
+CMD ["serve"]
