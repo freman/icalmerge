@@ -53,6 +53,8 @@ func Calendars(ctx context.Context, sources []Source, daysAhead, parallelism int
 
 	var result Result
 	var allEvents []*ical.VEvent
+	var allTimezones []*ical.VTimezone
+	seenTZ := make(map[string]struct{})
 
 	for i := range sources {
 		select {
@@ -61,6 +63,13 @@ func Calendars(ctx context.Context, sources []Source, daysAhead, parallelism int
 				result.Errors = append(result.Errors, r.err)
 			} else {
 				allEvents = append(allEvents, r.cal.Events()...)
+				for _, tz := range r.cal.Timezones() {
+					id := vtimezoneID(tz)
+					if _, ok := seenTZ[id]; !ok {
+						seenTZ[id] = struct{}{}
+						allTimezones = append(allTimezones, tz)
+					}
+				}
 			}
 		case <-ctx.Done():
 			result.Errors = append(result.Errors, fmt.Errorf("fetch timed out after %d/%d sources responded", i, len(sources)))
@@ -126,6 +135,10 @@ process:
 
 	out := ical.NewCalendarFor("icalmerge")
 	out.SetName("merged")
+
+	for _, tz := range allTimezones {
+		out.AddVTimezone(tz)
+	}
 
 	for _, ev := range filtered {
 		out.AddVEvent(ev)
@@ -199,6 +212,14 @@ func eventEnd(ev *ical.VEvent) time.Time {
 	}
 
 	return time.Time{}
+}
+
+func vtimezoneID(tz *ical.VTimezone) string {
+	if p := tz.GetProperty(ical.ComponentProperty(ical.PropertyTzid)); p != nil {
+		return p.Value
+	}
+
+	return ""
 }
 
 // eventRecurEnd returns the effective end of a recurring event's series and
