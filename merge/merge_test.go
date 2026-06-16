@@ -430,6 +430,71 @@ func TestConflicts_NoPrefixDoubling(t *testing.T) {
 	}
 }
 
+func TestCalendars_RecurringEventWithFutureUntil(t *testing.T) {
+	now := time.Now()
+	lastWeek := now.AddDate(0, 0, -7)
+	until := now.AddDate(0, 1, 0).UTC().Format("20060102T150405Z")
+
+	ev := ical.NewEvent("recurring-uid")
+	ev.SetStartAt(lastWeek)
+	ev.SetEndAt(lastWeek.Add(30 * time.Minute))
+	ev.SetSummary("weekly standup")
+	ev.AddRrule("FREQ=WEEKLY;UNTIL=" + until + ";INTERVAL=1")
+
+	sources := []merge.Source{
+		&mockSource{name: "s", cal: calWithEvents(ev)},
+	}
+
+	result := merge.Calendars(context.Background(), sources, 60, 0, false)
+
+	if len(result.Calendar.Events()) != 1 {
+		t.Fatalf("want 1 recurring event with future UNTIL, got %d", len(result.Calendar.Events()))
+	}
+}
+
+func TestCalendars_RecurringEventWithPastUntil(t *testing.T) {
+	now := time.Now()
+	lastMonth := now.AddDate(0, -1, 0)
+	until := now.AddDate(0, 0, -14).UTC().Format("20060102T150405Z")
+
+	ev := ical.NewEvent("old-recurring-uid")
+	ev.SetStartAt(lastMonth)
+	ev.SetEndAt(lastMonth.Add(30 * time.Minute))
+	ev.SetSummary("ended series")
+	ev.AddRrule("FREQ=WEEKLY;UNTIL=" + until + ";INTERVAL=1")
+
+	sources := []merge.Source{
+		&mockSource{name: "s", cal: calWithEvents(ev)},
+	}
+
+	result := merge.Calendars(context.Background(), sources, 60, 0, false)
+
+	if len(result.Calendar.Events()) != 0 {
+		t.Fatalf("want 0 events (series ended in past), got %d", len(result.Calendar.Events()))
+	}
+}
+
+func TestCalendars_RecurringEventInfinite(t *testing.T) {
+	now := time.Now()
+	lastWeek := now.AddDate(0, 0, -7)
+
+	ev := ical.NewEvent("infinite-uid")
+	ev.SetStartAt(lastWeek)
+	ev.SetEndAt(lastWeek.Add(time.Hour))
+	ev.SetSummary("daily standup")
+	ev.AddRrule("FREQ=DAILY;INTERVAL=1")
+
+	sources := []merge.Source{
+		&mockSource{name: "s", cal: calWithEvents(ev)},
+	}
+
+	result := merge.Calendars(context.Background(), sources, 60, 0, false)
+
+	if len(result.Calendar.Events()) != 1 {
+		t.Fatalf("want 1 infinite recurring event, got %d", len(result.Calendar.Events()))
+	}
+}
+
 type slowSource struct{ name string }
 
 func (s *slowSource) Name() string { return s.name }

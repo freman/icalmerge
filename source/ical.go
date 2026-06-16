@@ -47,9 +47,7 @@ func (s *ICal) Fetch(ctx context.Context) (*ical.Calendar, error) {
 		return nil, fmt.Errorf("read %s: %w", s.name, err)
 	}
 
-	body = normalizeTimezones(body)
-
-	cal, err := ical.ParseCalendar(bytes.NewReader(body))
+	cal, err := ical.ParseCalendarWithOptions(bytes.NewReader(body), ical.WithWindowsTimezoneMapping())
 	if err != nil {
 		return nil, fmt.Errorf("parse %s: %w", s.name, err)
 	}

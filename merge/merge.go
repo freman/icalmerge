@@ -87,6 +87,15 @@ process:
 			end = start
 		}
 
+		// For recurring events, use RRULE UNTIL as the effective end so
+		// future occurrences aren't dropped when only the master event's
+		// DTEND has already passed.
+		if end.Before(now) {
+			if recurEnd, ok := eventRecurEnd(ev); ok && recurEnd.After(end) {
+				end = recurEnd
+			}
+		}
+
 		if end.Before(now) || start.After(cutoff) {
 			continue
 		}
@@ -190,4 +199,29 @@ func eventEnd(ev *ical.VEvent) time.Time {
 	}
 
 	return time.Time{}
+}
+
+// eventRecurEnd returns the effective end of a recurring event's series and
+// true when the event has an RRULE. For rules with UNTIL set it returns that
+// timestamp; for infinite/COUNT-based series it returns a far-future sentinel.
+// Returns zero and false when no RRULE is present.
+func eventRecurEnd(ev *ical.VEvent) (time.Time, bool) {
+	rules, err := ev.GetRRules()
+	if err != nil || len(rules) == 0 {
+		return time.Time{}, false
+	}
+
+	latest := time.Time{}
+
+	for _, rule := range rules {
+		if rule.Until.IsZero() {
+			return time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC), true
+		}
+
+		if rule.Until.After(latest) {
+			latest = rule.Until
+		}
+	}
+
+	return latest, true
 }

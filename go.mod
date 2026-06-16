@@ -3,7 +3,7 @@ module github.com/freman/icalmerge
 go 1.26
 
 require (
-	github.com/arran4/golang-ical v0.3.1
+	github.com/arran4/golang-ical v0.3.6-0.20260516125910-f817e14cadc2
 	github.com/labstack/echo/v5 v5.0.0-20230722203903-ec5b858dab61
 	golang.org/x/crypto v0.37.0
 	golang.org/x/oauth2 v0.29.0
