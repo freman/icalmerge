@@ -114,7 +114,7 @@ func runOnce(configPath string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.FetchTimeout.Duration)
 	defer cancel()
 
-	result := merge.Calendars(ctx, sources, cfg.Server.DaysAhead, cfg.Server.Parallelism, cfg.Server.MarkConflicts)
+	result := merge.Calendars(ctx, sources, cfg.Server.DaysAhead, cfg.Server.Parallelism, cfg.Server.MarkConflicts, cfg.Server.ExpandRecurrences)
 
 	for _, e := range result.Errors {
 		slog.Warn("source error", "err", e)

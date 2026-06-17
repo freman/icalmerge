@@ -45,7 +45,7 @@ func TestWindowsTimezoneRRULE_EventIncluded(t *testing.T) {
 	}
 
 	src := &fuzzSource{cal: cal}
-	result := merge.Calendars(context.Background(), []merge.Source{src}, 60, 0, false)
+	result := merge.Calendars(context.Background(), []merge.Source{src}, 60, 0, false, false)
 
 	if len(result.Errors) != 0 {
 		t.Fatalf("unexpected errors: %v", result.Errors)
@@ -77,7 +77,7 @@ func FuzzCalendarsFromICal(f *testing.F) {
 		src := &fuzzSource{cal: cal}
 
 		// Must not panic regardless of what the parser accepted.
-		_ = merge.Calendars(context.Background(), []merge.Source{src}, 60, 0, false)
+		_ = merge.Calendars(context.Background(), []merge.Source{src}, 60, 0, false, false)
 	})
 }
 

@@ -59,7 +59,7 @@ func TestCalendars_MergesEvents(t *testing.T) {
 		&mockSource{name: "b", cal: calWithEvents(eventAt("ev2", tomorrow, dayAfter))},
 	}
 
-	result := merge.Calendars(context.Background(), sources, 60, 0, false)
+	result := merge.Calendars(context.Background(), sources, 60, 0, false, false)
 
 	if len(result.Errors) != 0 {
 		t.Fatalf("unexpected errors: %v", result.Errors)
@@ -83,7 +83,7 @@ func TestCalendars_DeduplicatesByUID(t *testing.T) {
 		&mockSource{name: "b", cal: calWithEvents(ev)},
 	}
 
-	result := merge.Calendars(context.Background(), sources, 60, 0, false)
+	result := merge.Calendars(context.Background(), sources, 60, 0, false, false)
 
 	events := result.Calendar.Events()
 	if len(events) != 1 {
@@ -105,7 +105,7 @@ func TestCalendars_FiltersExpiredEvents(t *testing.T) {
 		)},
 	}
 
-	result := merge.Calendars(context.Background(), sources, 60, 0, false)
+	result := merge.Calendars(context.Background(), sources, 60, 0, false, false)
 
 	events := result.Calendar.Events()
 	if len(events) != 1 {
@@ -132,7 +132,7 @@ func TestCalendars_FiltersBeyondDaysAhead(t *testing.T) {
 		)},
 	}
 
-	result := merge.Calendars(context.Background(), sources, 60, 0, false)
+	result := merge.Calendars(context.Background(), sources, 60, 0, false, false)
 
 	events := result.Calendar.Events()
 	if len(events) != 1 {
@@ -150,7 +150,7 @@ func TestCalendars_PartialSourceFailure(t *testing.T) {
 		&mockSource{name: "broken", err: fmt.Errorf("connection refused")},
 	}
 
-	result := merge.Calendars(context.Background(), sources, 60, 0, false)
+	result := merge.Calendars(context.Background(), sources, 60, 0, false, false)
 
 	if len(result.Errors) != 1 {
 		t.Fatalf("want 1 error, got %d", len(result.Errors))
@@ -168,7 +168,7 @@ func TestCalendars_AllSourcesFail(t *testing.T) {
 		&mockSource{name: "b", err: fmt.Errorf("timeout")},
 	}
 
-	result := merge.Calendars(context.Background(), sources, 60, 0, false)
+	result := merge.Calendars(context.Background(), sources, 60, 0, false, false)
 
 	if len(result.Errors) != 2 {
 		t.Fatalf("want 2 errors, got %d", len(result.Errors))
@@ -197,7 +197,7 @@ func TestCalendars_SortedByStart(t *testing.T) {
 		)},
 	}
 
-	result := merge.Calendars(context.Background(), sources, 60, 0, false)
+	result := merge.Calendars(context.Background(), sources, 60, 0, false, false)
 
 	events := result.Calendar.Events()
 	if len(events) != 3 {
@@ -217,7 +217,7 @@ func TestCalendars_Timeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
 	defer cancel()
 
-	result := merge.Calendars(ctx, []merge.Source{&slowSource{name: "slow"}}, 60, 0, false)
+	result := merge.Calendars(ctx, []merge.Source{&slowSource{name: "slow"}}, 60, 0, false, false)
 
 	if len(result.Errors) == 0 {
 		t.Fatal("want timeout error, got none")
@@ -260,7 +260,7 @@ func TestCalendars_ParallelismLimit(t *testing.T) {
 		sources[i] = makeSource(i)
 	}
 
-	merge.Calendars(context.Background(), sources, 60, limit, false)
+	merge.Calendars(context.Background(), sources, 60, limit, false, false)
 
 	if got := maxSeen.Load(); got > limit {
 		t.Fatalf("parallelism limit %d exceeded: saw %d concurrent fetches", limit, got)
@@ -306,7 +306,7 @@ func TestCalendars_ParallelismUnlimited(t *testing.T) {
 		sources[i] = makeSource()
 	}
 
-	merge.Calendars(context.Background(), sources, 60, 0, false)
+	merge.Calendars(context.Background(), sources, 60, 0, false, false)
 
 	if maxSeen != numSources {
 		t.Fatalf("want all %d sources fetched concurrently, max seen was %d", numSources, maxSeen)
@@ -325,7 +325,7 @@ func TestConflicts_OverlappingEventsMarked(t *testing.T) {
 		&mockSource{name: "s", cal: calWithEvents(a, b)},
 	}
 
-	result := merge.Calendars(context.Background(), sources, 60, 0, true)
+	result := merge.Calendars(context.Background(), sources, 60, 0, true, false)
 
 	events := result.Calendar.Events()
 	if len(events) != 2 {
@@ -352,7 +352,7 @@ func TestConflicts_NonOverlappingNotMarked(t *testing.T) {
 		&mockSource{name: "s", cal: calWithEvents(a, b)},
 	}
 
-	result := merge.Calendars(context.Background(), sources, 60, 0, true)
+	result := merge.Calendars(context.Background(), sources, 60, 0, true, false)
 
 	for _, ev := range result.Calendar.Events() {
 		prop := ev.GetProperty(ical.ComponentPropertySummary)
@@ -373,7 +373,7 @@ func TestConflicts_DisabledDoesNotMark(t *testing.T) {
 		&mockSource{name: "s", cal: calWithEvents(a, b)},
 	}
 
-	result := merge.Calendars(context.Background(), sources, 60, 0, false)
+	result := merge.Calendars(context.Background(), sources, 60, 0, false, false)
 
 	for _, ev := range result.Calendar.Events() {
 		prop := ev.GetProperty(ical.ComponentPropertySummary)
@@ -396,7 +396,7 @@ func TestConflicts_ThreeWayOverlap(t *testing.T) {
 		&mockSource{name: "s", cal: calWithEvents(a, b, c)},
 	}
 
-	result := merge.Calendars(context.Background(), sources, 60, 0, true)
+	result := merge.Calendars(context.Background(), sources, 60, 0, true, false)
 
 	events := result.Calendar.Events()
 	for _, ev := range events {
@@ -420,7 +420,7 @@ func TestConflicts_NoPrefixDoubling(t *testing.T) {
 
 	// Run twice - second run should not double-prefix since events are
 	// re-fetched each time. Verifies the HasPrefix guard works.
-	result := merge.Calendars(context.Background(), sources, 60, 0, true)
+	result := merge.Calendars(context.Background(), sources, 60, 0, true, false)
 
 	for _, ev := range result.Calendar.Events() {
 		prop := ev.GetProperty(ical.ComponentPropertySummary)
@@ -445,7 +445,7 @@ func TestCalendars_RecurringEventWithFutureUntil(t *testing.T) {
 		&mockSource{name: "s", cal: calWithEvents(ev)},
 	}
 
-	result := merge.Calendars(context.Background(), sources, 60, 0, false)
+	result := merge.Calendars(context.Background(), sources, 60, 0, false, false)
 
 	if len(result.Calendar.Events()) != 1 {
 		t.Fatalf("want 1 recurring event with future UNTIL, got %d", len(result.Calendar.Events()))
@@ -467,7 +467,7 @@ func TestCalendars_RecurringEventWithPastUntil(t *testing.T) {
 		&mockSource{name: "s", cal: calWithEvents(ev)},
 	}
 
-	result := merge.Calendars(context.Background(), sources, 60, 0, false)
+	result := merge.Calendars(context.Background(), sources, 60, 0, false, false)
 
 	if len(result.Calendar.Events()) != 0 {
 		t.Fatalf("want 0 events (series ended in past), got %d", len(result.Calendar.Events()))
@@ -488,7 +488,7 @@ func TestCalendars_RecurringEventInfinite(t *testing.T) {
 		&mockSource{name: "s", cal: calWithEvents(ev)},
 	}
 
-	result := merge.Calendars(context.Background(), sources, 60, 0, false)
+	result := merge.Calendars(context.Background(), sources, 60, 0, false, false)
 
 	if len(result.Calendar.Events()) != 1 {
 		t.Fatalf("want 1 infinite recurring event, got %d", len(result.Calendar.Events()))

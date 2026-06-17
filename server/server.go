@@ -93,7 +93,7 @@ func (s *Server) refresh(ctx context.Context) {
 	fetchCtx, cancel := context.WithTimeout(ctx, s.cfg.Server.FetchTimeout.Duration)
 	defer cancel()
 
-	result := merge.Calendars(fetchCtx, s.sources, s.cfg.Server.DaysAhead, s.cfg.Server.Parallelism, s.cfg.Server.MarkConflicts)
+	result := merge.Calendars(fetchCtx, s.sources, s.cfg.Server.DaysAhead, s.cfg.Server.Parallelism, s.cfg.Server.MarkConflicts, s.cfg.Server.ExpandRecurrences)
 
 	for _, err := range result.Errors {
 		slog.Warn("source error during poll", "err", err)
@@ -197,7 +197,7 @@ func (s *Server) getOnDemand() ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.cfg.Server.FetchTimeout.Duration)
 	defer cancel()
 
-	result := merge.Calendars(ctx, s.sources, s.cfg.Server.DaysAhead, s.cfg.Server.Parallelism, s.cfg.Server.MarkConflicts)
+	result := merge.Calendars(ctx, s.sources, s.cfg.Server.DaysAhead, s.cfg.Server.Parallelism, s.cfg.Server.MarkConflicts, s.cfg.Server.ExpandRecurrences)
 
 	for _, err := range result.Errors {
 		slog.Warn("source error", "err", err)

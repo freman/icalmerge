@@ -45,9 +45,10 @@ type Server struct {
 	CacheTTL      Duration `yaml:"cache_ttl"`
 	FetchTimeout  Duration `yaml:"fetch_timeout"`
 	PollInterval  Duration `yaml:"poll_interval"`
-	DaysAhead     int      `yaml:"days_ahead"`
-	Parallelism   int      `yaml:"parallelism"`
-	MarkConflicts bool     `yaml:"mark_conflicts"`
+	DaysAhead         int  `yaml:"days_ahead"`
+	Parallelism       int  `yaml:"parallelism"`
+	MarkConflicts     bool `yaml:"mark_conflicts"`
+	ExpandRecurrences bool `yaml:"expand_recurrences"`
 }
 
 type Google struct {

@@ -20,7 +20,7 @@ type Result struct {
 	Errors   []error
 }
 
-func Calendars(ctx context.Context, sources []Source, daysAhead, parallelism int, markConflicts bool) Result {
+func Calendars(ctx context.Context, sources []Source, daysAhead, parallelism int, markConflicts, expandRecurrences bool) Result {
 	type fetchResult struct {
 		cal *ical.Calendar
 		err error
@@ -80,6 +80,10 @@ func Calendars(ctx context.Context, sources []Source, daysAhead, parallelism int
 process:
 	now := time.Now()
 	cutoff := now.AddDate(0, 0, daysAhead)
+
+	if expandRecurrences {
+		allEvents = expandRecurringEvents(allEvents, now.Add(-24*time.Hour), cutoff)
+	}
 
 	seen := make(map[string]struct{})
 	var filtered []*ical.VEvent
