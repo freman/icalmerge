@@ -57,6 +57,8 @@ server:
   days_ahead: 60             # only include events in the next N days
   parallelism: 0             # max concurrent source fetches (0 = unlimited)
   mark_conflicts: false      # prefix overlapping events with "CONFLICT: "
+  expand_recurrences: false  # expand recurring events into individual instances server-side
+                             # use when your client doesn't handle RRULE (e.g. TRMNL)
 
 google:
   client_id: ""              # or use GOOGLE_CLIENT_ID env var
@@ -175,6 +177,8 @@ Tokens include a refresh token so they stay valid indefinitely unless access is 
 The `days_ahead` setting controls how far forward events are included. 30-60 days works well for a typical TRMNL calendar view.
 
 Enable `mark_conflicts: true` if you want scheduling conflicts to be visually obvious on the display.
+
+Enable `expand_recurrences: true` if the TRMNL plugin doesn't render recurring events - this materialises each occurrence as a standalone event within the `days_ahead` window.
 
 ---
 
